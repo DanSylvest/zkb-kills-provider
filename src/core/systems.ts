@@ -5,73 +5,86 @@
  * */
 
 import WebSocket from 'ws';
+import { Kill } from '../types';
+import { System } from './system';
+import { RECYCLE_SYSTEM_TIMEOUT, SOCKET_RECONNECT_INTERVAL } from '../constants';
 
-export type Kill = {
-  timestamp: number;
-  systemId: number;
-  hash: string;
-  esi: string;
-  url: string;
-};
-
-class System {
-  public systemId: number;
-  public kills: Kill[] = [];
-  protected hasDumpLoaded = false;
-
-  constructor(systemId: number) {
-    this.systemId = systemId;
-  }
-
-  init() {}
-
-  count() {
-    return this.kills.length;
-  }
-
-  add(kill: Kill) {
-    if (!this.hasDumpLoaded) {
-      return;
-    }
-
-    this.kills.push(kill);
-  }
-}
-
-class Systems {
+export class Systems {
   public systems: Map<number, System> = new Map<number, System>();
-
-  add(systemId: number) {
-    if (!this.systems.has(systemId)) {
-      const system = new System(systemId);
-      this.systems.set(systemId, system);
-
-      system.init();
-    }
-
-    // const sys = this.systems.get(systemId);
-  }
-
-  protected processKill(kill: Kill) {
-    console.log(kill);
-  }
+  protected wsSocket: WebSocket;
 
   init() {
+    this.initZkbSocket();
+    this.initRecycler();
+  }
+
+  initZkbSocket() {
+    this.createSocketConnection();
+
+    setInterval(() => {
+      this.wsSocket.close();
+      this.createSocketConnection();
+    }, SOCKET_RECONNECT_INTERVAL);
+  }
+
+  initRecycler() {
+    setInterval(() => {
+      this.systems.forEach((x) => x.recycle());
+    }, RECYCLE_SYSTEM_TIMEOUT);
+  }
+
+  createSocketConnection() {
     const ws = new WebSocket('wss://zkillboard.com/websocket/');
 
     ws.on('open', function open() {
       console.log('Has open');
       ws.send('{"action":"sub","channel":"killstream"}');
-      // ws.send('{"action":"sub","channel":"all:*"}');
     });
 
     ws.on('message', (data) => {
-      const { locationID, hash, esi, url } = JSON.parse(data.toString()).zkb;
-      const timestamp = +new Date();
-      const kill = { systemId: locationID, hash, esi, url, timestamp };
-      this.processKill(kill);
+      try {
+        const {
+          zkb: { hash, esi, url },
+          solar_system_id,
+        } = JSON.parse(data.toString());
+        const timestamp = +new Date();
+        const kill = { systemId: solar_system_id, hash, esi, url, timestamp };
+        this.processKill(kill);
+      } catch (err) {
+        // do nothing
+      }
     });
+
+    this.wsSocket = ws;
+  }
+
+  protected processKill(kill: Kill) {
+    console.log(kill);
+    const sys = this.add(kill.systemId);
+    sys.add({
+      ...kill,
+      humanDate: new Date(kill.timestamp).toUTCString(),
+    });
+  }
+
+  add(systemId: number) {
+    if (this.systems.has(systemId)) {
+      return this.systems.get(systemId);
+    }
+
+    const system = new System(systemId);
+    this.systems.set(systemId, system);
+
+    return system;
+  }
+
+  getKillsBySystem(systemId: number) {
+    if (!this.systems.has(systemId)) {
+      return [];
+    }
+
+    return this.systems.get(systemId).kills;
   }
 }
 
-export const systems = new Systems();
+// export const systems = new Systems();`

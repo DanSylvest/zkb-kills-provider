@@ -1,7 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import nconf from 'nconf';
-import { systems } from './core/systems';
 
 const setupConfig = () => {
   nconf.argv().env().file('project.config.json');
@@ -17,13 +16,6 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   await app.listen(port);
   console.log(`Start listening on port ${port}`);
-
-  initSystems();
-
-}
-
-async function initSystems() {
-  systems.init();
 }
 
 bootstrap();
