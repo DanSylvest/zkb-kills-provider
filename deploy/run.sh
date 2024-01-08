@@ -1,30 +1,9 @@
-echo 'Start installing route-builder';
+echo 'Start installing zkb-kills-provider';
 
 ROOT=$(pwd);
 
 echo 'Install nestjs'
 npm i -g @nestjs/cli
-
-echo '_____________ INITIAL FOLDER STATE _____________'
-ls -al
-echo '_____________ INITIAL FOLDER STATE _____________'
-
-echo "Download latest eve systems and routes";
-if [ ! -d "$ROOT/eveData" ]; then
-  mkdir -p "$ROOT/eveData";
-fi
-
-
-cd "$ROOT/eveData" || exit;
-rm -f *
-
-latestURLSystems='https://www.fuzzwork.co.uk/dump/latest/mapSolarSystems.csv';
-latestURLJumps='https://www.fuzzwork.co.uk/dump/latest/mapSolarSystemJumps.csv';
-
-echo '_____________ Download Systems _____________'
-curl -O "${latestURLSystems}";
-echo '_____________ Download Jumps _____________'
-curl -O "${latestURLJumps}";
 
 echo " _____________ DUMP ----------------"
 ls -al
