@@ -57,8 +57,10 @@ export class Systems {
         const {
           zkb: { hash, esi, url },
           solar_system_id,
+          killmail_time,
         } = JSON.parse(data.toString());
-        const timestamp = +new Date();
+
+        const timestamp = +new Date(killmail_time);
         const kill = { systemId: solar_system_id, hash, esi, url, timestamp };
         this.processKill(kill);
       } catch (err) {
@@ -70,7 +72,6 @@ export class Systems {
   }
 
   protected processKill(kill: Kill) {
-    console.log(kill);
     const sys = this.add(kill.systemId);
     sys.add({
       ...kill,
@@ -94,6 +95,6 @@ export class Systems {
       return [];
     }
 
-    return this.systems.get(systemId).kills;
+    return this.systems.get(systemId).kills();
   }
 }
