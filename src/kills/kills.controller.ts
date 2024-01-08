@@ -6,8 +6,7 @@ export class KillsController {
   constructor(private readonly killsService: KillsService) {}
 
   @Post('systems')
-  kills(@Body('systemIds') systemIds: number[]): {} {
-    // console.log(systemIds);
+  kills(@Body('systemIds') systemIds: number[]) {
     return this.killsService.getKillsBySystemIds(systemIds);
   }
 }

@@ -3,8 +3,6 @@ import { Systems } from '../core/systems';
 
 @Injectable()
 export class KillsService {
-  // protected graph: Graph = new Graph();
-
   protected systems: Systems = new Systems();
 
   constructor() {

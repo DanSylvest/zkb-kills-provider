@@ -29,7 +29,18 @@ export class Systems {
 
   initRecycler() {
     setInterval(() => {
-      this.systems.forEach((x) => x.recycle());
+      const forRemove: number[] = [];
+
+      this.systems.forEach((system) => {
+        system.recycle();
+        if (system.count() === 0) {
+          forRemove.push(system.systemId);
+        }
+      });
+
+      forRemove.forEach((x) => {
+        this.systems.delete(x);
+      });
     }, RECYCLE_SYSTEM_TIMEOUT);
   }
 
@@ -86,5 +97,3 @@ export class Systems {
     return this.systems.get(systemId).kills;
   }
 }
-
-// export const systems = new Systems();`
