@@ -8,6 +8,7 @@ import WebSocket from 'ws';
 import { Kill } from '../types';
 import { System } from './system';
 import { RECYCLE_SYSTEM_TIMEOUT, SOCKET_RECONNECT_INTERVAL } from '../constants';
+import * as console from 'node:console';
 
 export class Systems {
   public systems: Map<number, System> = new Map<number, System>();
@@ -48,7 +49,7 @@ export class Systems {
     const ws = new WebSocket('wss://zkillboard.com/websocket/');
 
     ws.on('open', function open() {
-      console.log('Has open');
+      console.log(`[${new Date().toUTCString()}]: Socket has open`);
       ws.send('{"action":"sub","channel":"killstream"}');
     });
 
@@ -61,11 +62,18 @@ export class Systems {
         } = JSON.parse(data.toString());
 
         const timestamp = +new Date(killmail_time);
-        const kill = { systemId: solar_system_id, hash, esi, url, timestamp };
-        this.processKill(kill);
+        this.processKill({ systemId: solar_system_id, hash, esi, url, timestamp });
       } catch (err) {
         // do nothing
       }
+    });
+
+    ws.on('error', (event: any) => {
+      console.error('WebSocket error observed:', event);
+
+      console.log(`[${new Date().toUTCString()}]: Trying to create new connection`);
+      this.wsSocket.close();
+      this.createSocketConnection();
     });
 
     this.wsSocket = ws;
